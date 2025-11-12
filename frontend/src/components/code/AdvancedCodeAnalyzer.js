@@ -27,6 +27,32 @@ export default function AdvancedCodeAnalyzer() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCode(event.target.result);
+      };
+      reader.readAsText(droppedFile);
+    }
+  };
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -125,22 +151,35 @@ export default function AdvancedCodeAnalyzer() {
 
           <div className="space-y-2">
             <Label>Upload File</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => document.getElementById('file-input').click()}
-                className="w-full"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {file ? file.name : 'Choose File'}
-              </Button>
-              <input
-                id="file-input"
-                type="file"
-                accept=".py,.js,.ts,.java,.cpp,.c,.cs,.go,.rs,.php,.rb,.swift,.kt,.scala,.r,.sql"
-                onChange={handleFileChange}
-                className="hidden"
-              />
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-6 transition-colors ${
+                isDragging ? 'border-primary bg-primary/10' : 'border-muted'
+              }`}
+            >
+              <div className="text-center">
+                <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground mb-2">
+                  {file ? file.name : 'Drag and drop your code file here'}
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">or</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('file-input').click()}
+                >
+                  Choose File
+                </Button>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept=".py,.js,.ts,.java,.cpp,.c,.cs,.go,.rs,.php,.rb,.swift,.kt,.scala,.r,.sql"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
             </div>
           </div>
 

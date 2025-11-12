@@ -521,13 +521,55 @@ function QA() {
 
 function Summarizer() {
   const [text, setText] = React.useState("");
+  const [file, setFile] = React.useState(null);
   const [summary, setSummary] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [style, setStyle] = React.useState("bullet_points");
+  const [maxPoints, setMaxPoints] = React.useState(5);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+      // Read file content to show in textarea
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setText(event.target.result);
+      };
+      reader.readAsText(droppedFile);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setText(event.target.result);
+      };
+      reader.readAsText(selectedFile);
+    }
+  };
 
   const handleSummarize = async () => {
-    if (!text.trim()) {
-      setError("Please enter text to summarize");
+    if (!text.trim() && !file) {
+      setError("Please enter text or upload a file");
       return;
     }
 
@@ -536,10 +578,22 @@ function Summarizer() {
     setSummary([]);
 
     try {
-      const response = await api.post("/summarize", {
-        text: text.trim(),
-        max_points: 5,
-      });
+      let response;
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('style', style);
+        formData.append('max_points', maxPoints);
+        response = await api.post("/v2/summarize", formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        response = await api.post("/v2/summarize/text", {
+          text: text.trim(),
+          style: style,
+          max_points: maxPoints,
+        });
+      }
       setSummary(response.data.summary);
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message || "Failed to summarize";
@@ -551,6 +605,7 @@ function Summarizer() {
 
   const handleClear = () => {
     setText("");
+    setFile(null);
     setSummary([]);
     setError("");
   };
@@ -559,15 +614,59 @@ function Summarizer() {
     <PageShell title="Text Summarizer" subtitle="Condense long passages into clear, actionable notes.">
       <div className="tool-grid">
         <div className="glass tool-input">
-          <Label htmlFor="text">Paste text</Label>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-4 mb-4 transition-colors ${
+              isDragging ? 'border-primary bg-primary/10' : 'border-muted'
+            }`}
+          >
+            <div className="text-center">
+              <FileText className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">
+                {file ? file.name : 'Drag and drop a file here, or click to browse'}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('file-input').click()}
+              >
+                Choose File
+              </Button>
+              <input
+                id="file-input"
+                type="file"
+                accept=".txt,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="style">Summary Style</Label>
+            <Select value={style} onValueChange={setStyle}>
+              <SelectTrigger id="style">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bullet_points">Bullet Points</SelectItem>
+                <SelectItem value="paragraph">Paragraph</SelectItem>
+                <SelectItem value="concise">Concise</SelectItem>
+                <SelectItem value="detailed">Detailed</SelectItem>
+                <SelectItem value="academic">Academic</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Label htmlFor="text">Or paste text</Label>
           <Textarea 
             id="text" 
-            rows={10} 
+            rows={8} 
             placeholder="Paste or type your content here..." 
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <div className="row">
+          <div className="row mt-4">
             <Button className="btn-primary" onClick={handleSummarize} disabled={loading}>
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Summarizing...</> : "Summarize"}
             </Button>
@@ -604,13 +703,54 @@ function Summarizer() {
 
 function MCQ() {
   const [topic, setTopic] = React.useState("");
+  const [file, setFile] = React.useState(null);
   const [questions, setQuestions] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [difficulty, setDifficulty] = React.useState("medium");
+  const [numQuestions, setNumQuestions] = React.useState(5);
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      setFile(droppedFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setTopic(event.target.result);
+      };
+      reader.readAsText(droppedFile);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setTopic(event.target.result);
+      };
+      reader.readAsText(selectedFile);
+    }
+  };
 
   const handleGenerate = async () => {
-    if (!topic.trim()) {
-      setError("Please enter a topic");
+    if (!topic.trim() && !file) {
+      setError("Please enter a topic or upload a file");
       return;
     }
 
@@ -619,10 +759,22 @@ function MCQ() {
     setQuestions([]);
 
     try {
-      const response = await api.post("/mcq", {
-        topic: topic.trim(),
-        num_questions: 5,
-      });
+      let response;
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('difficulty', difficulty);
+        formData.append('num_questions', numQuestions);
+        response = await api.post("/v2/mcq", formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        response = await api.post("/v2/mcq/text", {
+          text: topic.trim(),
+          difficulty: difficulty,
+          num_questions: numQuestions,
+        });
+      }
       setQuestions(response.data.questions);
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message || "Failed to generate questions";
@@ -634,6 +786,7 @@ function MCQ() {
 
   const handleClear = () => {
     setTopic("");
+    setFile(null);
     setQuestions([]);
     setError("");
   };
@@ -642,7 +795,49 @@ function MCQ() {
     <PageShell title="MCQ Generator" subtitle="Create quizzes from any topic and practice instantly.">
       <div className="tool-grid">
         <div className="glass tool-input">
-          <Label htmlFor="mcq-topic">Topic or subject</Label>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-4 mb-4 transition-colors ${
+              isDragging ? 'border-primary bg-primary/10' : 'border-muted'
+            }`}
+          >
+            <div className="text-center">
+              <ListChecks className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-2">
+                {file ? file.name : 'Drag and drop a file here, or click to browse'}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('mcq-file-input').click()}
+              >
+                Choose File
+              </Button>
+              <input
+                id="mcq-file-input"
+                type="file"
+                accept=".txt,.pdf,.doc,.docx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <div className="space-y-2 mb-4">
+            <Label htmlFor="difficulty">Difficulty</Label>
+            <Select value={difficulty} onValueChange={setDifficulty}>
+              <SelectTrigger id="difficulty">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="easy">Easy</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Label htmlFor="mcq-topic">Or enter topic/subject</Label>
           <Textarea 
             id="mcq-topic" 
             rows={6} 
@@ -650,7 +845,7 @@ function MCQ() {
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
           />
-          <div className="row">
+          <div className="row mt-4">
             <Button className="btn-primary" onClick={handleGenerate} disabled={loading}>
               {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...</> : "Generate MCQs"}
             </Button>
