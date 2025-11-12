@@ -1,0 +1,32 @@
+# Vercel Serverless API Requirements
+# Full-featured deployment with all capabilities
+
+fastapi==0.110.1
+uvicorn[standard]==0.25.0
+python-dotenv>=1.0.1
+pydantic>=2.6.4
+python-multipart>=0.0.9
+
+# Authentication & Security (V3)
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.1
+
+# LLM Providers (at least one required)
+google-generativeai>=0.3.0
+openai>=1.3.0
+anthropic>=0.7.0
+
+# File Processing (for V2 features)
+PyPDF2>=3.0.0
+python-docx>=1.1.0
+
+# MongoDB (optional but recommended for V3 features)
+# Without MongoDB: Basic AI features work
+# With MongoDB: Full auth, gamification, history
+motor==3.3.1
+pymongo==4.5.0
+
+# HTTP
+httpx>=0.25.0
+requests>=2.31.0
