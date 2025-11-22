@@ -1,0 +1,28 @@
+# Vercel Ignore Configuration
+# Exclude files and directories from deployment
+
+# Backend files (deploy separately)
+backend/
+tests/
+
+# Git configuration
+.git/
+.gitconfig
+.gitignore
+
+# Development files
+node_modules/
+*.log
+.DS_Store
+.env.local
+.env.*.local
+
+# Build artifacts (not needed in deployment)
+*.map
+.eslintcache
+
+# Documentation (optional, remove if you want to deploy docs)
+# DOCS_INDEX.md
+# MULTI_LLM_GUIDE.md
+# QUICKSTART.md
+# README.md

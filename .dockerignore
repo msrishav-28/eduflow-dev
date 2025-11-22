@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Documentation
+*.md
+LICENSE
+docs/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+venv
+.venv
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+build
+dist
+*.log
+
+# Testing
+coverage
+.pytest_cache
+.coverage
+
+# OS
+.DS_Store
+Thumbs.db
